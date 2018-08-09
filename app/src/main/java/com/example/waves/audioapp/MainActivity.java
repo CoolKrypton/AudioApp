@@ -1,7 +1,10 @@
 package com.example.waves.audioapp;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.media.AudioManager;
+import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.LinearLayout;
@@ -24,6 +27,7 @@ import android.widget.ArrayAdapter;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,16 +49,18 @@ public class MainActivity extends AppCompatActivity {
     private List<Short> reverbNames = new ArrayList<Short>();
     private List<String> reverbVals = new ArrayList<String>();
 
+    List<String> permissions = new ArrayList<String>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        askPermission();
         // 设置控制音乐声音
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
         layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
 
-        setContentView(R.layout.activity_main);
+        setContentView(layout);
         // 创建MediaPlayer对象
         mPlayer = MediaPlayer.create(this, R.raw.rgqc);
         // 初始化示波器
@@ -67,6 +73,43 @@ public class MainActivity extends AppCompatActivity {
         setupPresetReverb();
         // 开发播放音乐
         mPlayer.start();
+    }
+
+    private boolean askPermission() {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            int RECORD_AUDIO = checkSelfPermission( Manifest.permission.RECORD_AUDIO );
+            if (RECORD_AUDIO != PackageManager.PERMISSION_GRANTED) {
+                permissions.add(Manifest.permission.RECORD_AUDIO);
+            }
+
+            if (!permissions.isEmpty()) {
+                requestPermissions(permissions.toArray(new String[permissions.size()]), 1);
+            } else
+                return false;
+        } else
+            return false;
+        return true;
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == 1) {
+
+            boolean result = true;
+            for (int i = 0; i < permissions.length; i++) {
+                result = result && grantResults[i] == PackageManager.PERMISSION_GRANTED;
+            }
+            if (!result) {
+
+                Toast.makeText(this, "授权结果（至少有一项没有授权），result="+result, Toast.LENGTH_LONG).show();
+                // askPermission();
+            } else {
+                //授权成功
+            }
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     private void setupVisualizer() {
